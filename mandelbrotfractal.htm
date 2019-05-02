@@ -1,0 +1,526 @@
+<!DOCTYPE = html>
+<head>
+  <title>JavaScript Mandelbrot fractal</title>
+  <meta charset = utf-8>
+  <meta name = description  content = "mandelbrot fractal">
+  <meta name = keywords content = "mandelbrot, fractal, games, mandelbrotset, juliaset, graphics, 
+    computerprogramming, javaScript, computerart, colors, colorschemes">
+  
+  <style>
+    body {
+      font-family   : Arial, Helvetica, sans-serif;
+      background: #006666 url(../matrix.jpg);     
+      color: #FFFF00;
+    }
+    #tekst  {         
+       color     : #FFFF00;  
+       background: #000000;  
+       margin    : 10px 10% 10px 10%;
+    } 
+        
+    
+    h1 {
+      padding   : 6px;
+      margin    : 10px 20% 10px 20%; 
+      color     : #FFFF00;
+      font-weight  : bold;
+      background: none; 
+    }
+
+    div.divmandelprog {
+      position: relative;      
+      margin: auto;    
+      width:80%; 
+      //border: 3px solid #73AD21;   
+    } 
+
+    div.knoppenpaneel {
+      background: #CC9966;
+      position: abslute;      
+      margin: auto;    
+      width: 720px; 
+      //border: 3px solid #73AD21;   
+    }
+    div.kleurschema {
+      background: #CC9966;
+      position: absolute;      
+      margin  : auto;    
+      top: 5px;
+      left: 20px;
+      width: 180px;
+      height : 540px;
+      //border: 3px solid #73AD21;   
+    } 
+    
+    
+
+  </style>  
+  <script language= JavaScript" type="text/javascript" >
+  <!--      
+  var BX, EX, BY, EY;
+  var Tekenvierkant;
+  var x, y; 
+  var MaxX = 720, MaxY = 540;     
+  var MaxIt = 120;
+  var Zoomfactor = 2.0;
+  var Vergroting = 1.0; 
+  var ZoomModus;
+  var KleurOptie  = new Array(12);
+  //voor kleurschema
+  var KlAantal, KLGradient;
+  var KleurenschemaRGB = new Array(8);
+  
+  for (var i = 0; i < 12; i++) {
+    KleurOptie[i] = new Array(2);
+  }
+
+  for (var i = 0; i < 8; i++) {
+    KleurenschemaRGB[i] = new Array(4); //r+g+b
+  }
+ 
+  BX = -2.1; BY = -1.2; EX = 0.9;  EY = 1.2;            
+
+
+//******************************************************************
+  function Bepaalkleurschema() {
+  var KleurId;
+  var select;
+  var Hkleur;
+     
+     if (isNaN(document.forms[1].kleurgrad.value) == false) {
+       KLGradient = Math.floor(Math.abs(document.forms[1].kleurgrad.value));   
+     }
+     
+     document.forms[1].kleurgrad.value = KLGradient;
+     select  =  document.getElementById("aantalkleur");          
+     KlAantal = select.value;     
+     for (var k = 1; k <= KlAantal;k++) {          
+        KleurId = "kleur" + k;
+        select  =  document.getElementById(KleurId);
+        Hkleur  =  select.value;
+        KleurenschemaRGB[k-1][0] = Hkleur;
+        KleurenschemaRGB[k-1][1] = hexToR(Hkleur); //rood        
+        KleurenschemaRGB[k-1][2] = hexToG(Hkleur); //groen        
+        KleurenschemaRGB[k-1][3] = hexToB(Hkleur); //blauw       
+     }
+  }
+
+//******************************************************************
+  function hexToR(h) {
+    return parseInt(h.substring(1,3),16);
+  }
+//******************************************************************
+  function hexToG(h) {
+    return parseInt(h.substring(3,5),16);    
+  }
+//******************************************************************
+function hexToB(h) {
+  return parseInt(h.substring(5,7),16);  
+ }
+//******************************************************************
+function cutHex(h) {
+  return (h.charAt(0)=="#") ? h.substring(1,7):h
+} 
+
+
+  //*****************************************  
+  function setLabelKleur(Kleur, Pnr) {
+  var PId;   
+  var select; 
+   
+    PId = "pkleur" + Pnr;    
+    select =  document.getElementById(PId);
+    select.style.color = Kleur;       
+  }
+
+  //*****************************************  
+  function setKleurAantal(AantalK) {
+  var KleurId;    
+  var select;
+
+     for (var k = 2; k<=AantalK; k++) {
+        KleurId = "pkleur" + k; 
+        select =  document.getElementById(KleurId);        
+        select.style.visibility = "visible";
+     }       
+     AantalK = parseInt(AantalK);          
+     for (var k = AantalK+1; k<=8; k++) {        
+        KleurId = "pkleur" + k;        
+        select =  document.getElementById(KleurId);        
+        select.style.visibility = "hidden";
+     }  
+  }
+
+  //*****************************************
+  function LaadKleurOpties() {
+    KleurOptie[0][0] =  "#000000"; KleurOptie[0][1] = "Zwart";
+    KleurOptie[1][0] =  "#0000FF"; KleurOptie[1][1] = "Blauw";
+    KleurOptie[2][0] =  "#FFFFFF"; KleurOptie[2][1] = "Wit";
+    KleurOptie[3][0] =  "#FF9900"; KleurOptie[3][1] = "Oranje";
+    KleurOptie[4][0] =  "#00FF00"; KleurOptie[4][1] = "Fel groen";
+    KleurOptie[5][0] =  "#FF0000"; KleurOptie[5][1] = "Rood";
+    KleurOptie[6][0] =  "#FFFF00"; KleurOptie[6][1] = "Geel";
+    KleurOptie[7][0] =  "#00FFFF"; KleurOptie[7][1] = "Cyaan";
+    KleurOptie[8][0] =  "#FF00FF"; KleurOptie[8][1] = "Roze";
+    KleurOptie[9][0] =  "#00AA00"; KleurOptie[9][1] = "Groen";
+    KleurOptie[10][0] = "#880088"; KleurOptie[10][1] = "Paars";
+    KleurOptie[11][0] = "#AA4400"; KleurOptie[11][1] = "Bruin";
+  } 
+  
+  //*****************************************
+  function VoegInKleurOpties() {  
+    LaadKleurOpties();
+    var KleurId;
+    var select;
+
+    select  =  document.getElementById("aantalkleur");          
+    select.value = 4;
+    for (var k = 1; k<=8; k++) {
+      KleurId = "kleur" + k;      
+      var select = document.getElementById(KleurId);
+      for (var i = 0; i<12; i++) {
+        var opt = document.createElement('option');
+        opt.value = KleurOptie[i][0];
+        opt.innerHTML = KleurOptie[i][1];
+        select.appendChild(opt); 
+      }
+
+      if (k == 1) {
+        select.value = "#000000";       
+        select =  document.getElementById("pkleur" + k);
+        select.style.color = "#000000";
+      } 
+      if (k == 2) {
+        select.value = "#0000FF";
+        select =  document.getElementById("pkleur" + k);
+        select.style.color = "#0000FF";
+      }
+      if (k == 3) {
+        select.value = "#FFFFFF";
+        select =  document.getElementById("pkleur" + k);
+        select.style.color = "#FFFFFF";
+      }
+      if (k == 4) {
+        select.value = "#FF9900";
+        select =  document.getElementById("pkleur" + k);
+        select.style.color = "#FF9900";
+      }
+      if (k>4) {
+        select =  document.getElementById("pkleur" + k);
+        select.style.visibility = "hidden";         
+      }
+    }    
+         
+  }
+
+  //*****************************************
+  function ZoomIn(e, ZoomModus) {
+    var canvas = document.getElementById("myCanvas");
+    var rect = canvas.getBoundingClientRect();
+    var Xpos,Ypos;
+    var MXpos, MYpos;
+    var NewBX,NewEX, NewBY, NewEY; 
+    
+    if (isNaN(document.forms[0].MaxIt.value) == false) {
+      MaxIt = document.forms[0].MaxIt.value;   
+    }
+    document.forms[0].MaxIt.value = MaxIt; 
+
+    Zoomfactor = parseFloat(document.forms[0].Zoomfactor.value);
+    if (ZoomModus <3) {
+      if (ZoomModus == 1) { //klik op canvas
+        Xpos = e.clientX - rect.left;
+        Ypos = e.clientY - rect.top;
+      }  
+      if (ZoomModus == 2) { //druk op teken-knop
+        Xpos = canvas.width / 2;
+        Ypos = canvas.height /2;
+      }
+      MXpos = BX + (EX - BX) * (Xpos / canvas.width);
+      MYpos = BY + (EY - BY) * (Ypos / canvas.height);     
+      NewBX = MXpos - (EX - BX)/ (Zoomfactor *2);
+      NewEX = MXpos + (EX - BX)/ (Zoomfactor *2); 
+      NewBY = MYpos - (EY - BY)/ (Zoomfactor *2);
+      NewEY = MYpos + (EY - BY)/ (Zoomfactor *2); 
+      BX = NewBX; EX = NewEX; BY = NewBY; EY = NewEY; 
+      Vergroting = Vergroting * Zoomfactor;        
+    }
+    if (ZoomModus == 3) { //reset      
+       BX = -2.1; BY = -1.2; EX = 0.9;  EY = 1.2;
+       Vergroting = 1;             
+    }             
+    document.forms[0].vergroting.value = parseFloat(Vergroting);    
+
+    ctx = canvas.getContext("2d"); 
+    ctx.fillStyle = MaakHexColor(0,0,0);
+    ctx.fillRect(0,0,MaxX,MaxY);   
+    x =0; y=0; 
+ 
+    Bepaalkleurschema();    
+    //BepaalKleur(125); //om te testen hier
+    TekenInterval = setInterval(function(){TekenKolom();},0); //wow, dit werkt!      
+     
+  }
+
+  //*****************************************
+  function VulCanvas(e) {
+    var canvas = document.getElementById("myCanvas");
+    var rect = canvas.getBoundingClientRect();
+    var d = document.getElementById("kleurenpaneel");
+
+
+    d.style.position = "absolute";           
+    d.style.left =  (rect.left - (Math.floor(screen.width * 0.1)) - 180-10) + "px";  //100 + "px"; - 
+    
+
+    document.forms[0].MaxIt.value = MaxIt;
+    KLGradient = 25;
+    document.forms[1].kleurgrad.value = KLGradient;
+
+    VoegInKleurOpties();
+    ZoomIn("sesam",3);
+    //TekenMandelbrot(BX, BY,EX,EY);    
+  }  
+  
+
+  //**********************************************************
+  function TekenKolom() {
+     var canvas = document.getElementById("myCanvas");
+     var ctx = canvas.getContext("2d"); 
+     var StepX, StepY;
+     var MandelX, MandelY;
+     var It;           
+    
+     StepX = (EX - BX) / MaxX;        
+     StepY = (EY - BY) / MaxY;      
+     MandelX = BX + x * StepX;
+     MandelY = BY;     
+     
+     //MaxIt = 120;
+     for (var y = 0; y<MaxY;y++) {              
+       It = BepaalIteraties(MandelX, MandelY,MaxIt);          
+       if (It < MaxIt) {
+         ctx.fillStyle = BepaalKleur(It);       
+       }
+       else {
+         ctx.fillStyle = MaakHexColor(0,0,0);
+       }          
+       ctx.fillRect(x,y,1,1);  
+       MandelY = MandelY + StepY;                              
+     }
+     if (x == MaxX) {clearInterval(TekenInterval); }
+     else {x++;} 
+
+     
+  }
+
+   //*********************************************************   
+   function TekenMandelbrot (BX, BY,EX,EY) {
+     var canvas = document.getElementById("myCanvas");
+     var ctx = canvas.getContext("2d");
+     var StepX, StepY;
+     var MandelX, MandelY;
+     var It;  
+       
+       document.forms[0].MaxIt.value = MaxIt; 
+       ctx.fillStyle = MaakHexColor(0,0,0);
+       ctx.fillRect(0,0,MaxX,MaxY);
+       x = 0; y = 0;
+       TekenInterval = setInterval(function(){TekenKolom();},0);      
+   }
+
+   //*********************************************************
+   function BepaalKleur(It) {
+      var Grad, KSteps, BasisKleurNr, DoelKleurNr; 
+      var BKR, BKG, BKB, DKR, DKG, DKB, KSR, KSG, KSB;
+      var Hexkleur;
+      var R,G,B;
+         
+      //bedoeling is dat kleuren geleidelijk van de ene naar de andere kleur gaan
+      //zwart --> blauw --> wit --> oranje--zwart etc.        
+      //in 25 stappen van ene naar andere kleur
+      //test: It =137
+          
+      Grad = KLGradient;
+      KSteps = It % Grad;
+
+      BasisKleurNr = ((It - KSteps) / Grad) % KlAantal;            
+      if (BasisKleurNr < (KlAantal-1)) {
+        DoelKleurNr = BasisKleurNr +1;                 
+      } 
+      else {
+        DoelKleurNr = 0;
+      }      
+      
+      BKR = KleurenschemaRGB[BasisKleurNr][1];      
+      BKG = KleurenschemaRGB[BasisKleurNr][2];
+      BKB = KleurenschemaRGB[BasisKleurNr][3];                
+      DKR = KleurenschemaRGB[DoelKleurNr][1];
+      DKG = KleurenschemaRGB[DoelKleurNr][2];
+      DKB = KleurenschemaRGB[DoelKleurNr][3];
+        
+      KSR = (DKR - BKR) / Grad; 
+      KSG = (DKG - BKG) / Grad;
+      KSB = (DKB - BKB) / Grad;
+        
+      R = Math.floor(BKR + KSR * KSteps); //door pas hier af te ronden grotere nauwkeurigheid
+      G = Math.floor(BKG + KSG * KSteps);
+      B = Math.floor(BKB + KSB * KSteps);  
+      if ((R < 0) || (G< 0) || (B < 0)) {alert(R +"," + G +"," + B);}
+      Hexkleur = MaakHexColor(R, G, B);  
+             
+      return Hexkleur;      
+   }
+   //*********************************************************
+   function MaakHexColor(r,g,b) {
+      var HexKleur;
+         
+      HexKleur = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);     
+      return HexKleur;  
+   }
+
+   //*********************************************************
+   function BepaalIteraties(BeginX, BeginY, MaxIt) {
+      var OldX, OldY, NewX, NewY;  
+      var Z, I;
+      var AantalIt;
+   
+      AantalIt = 0;
+      Z = 0;
+      OldX = BeginX; OldY = BeginY;     
+      
+      while ((AantalIt < MaxIt) & (Z<10)) {                 
+        NewX = (OldX * OldX) - (OldY*OldY) + BeginX;          
+        NewY =  2 * OldX * OldY + BeginY;            
+        Z =  (NewX * NewX) + (NewY * NewY);
+        OldX = NewX; OldY = NewY; 
+        AantalIt++;                
+      }    	   
+      return AantalIt;  
+   }
+
+  
+   //*********************************************************
+   function componentToHex(c) {
+     var hex = parseInt(c).toString(16);
+     return hex.length == 1 ? "0" + hex : hex;
+   }
+
+  -->   
+  </script>
+</head>
+
+
+<html>
+  <body onLoad ="VulCanvas(event)">
+    
+    <h1><center>Mandelbrot fractal</center></h1>   
+    <div class = "divmandelprog" id = "divmandel">    
+    <center>
+      <canvas id="myCanvas" Onclick= "ZoomIn(event, 1)" width="720" height="540" style="border:1px solid #000000;">
+      </canvas>          
+    </center> 
+
+    <div class = "knoppenpaneel">
+      <fieldset>
+      <form name = "controleknoppen" style="clear: both">     
+        <center>
+        Zoomfactor:
+        <select name = "Zoomfactor">
+        <option value  = "1"> 1
+        <option value = "1.5">1.5
+        <option selected value = "2">2
+        <option value = "3">3
+        <option value = "5">5
+        <option value = "10">10
+        <option value = "25">25
+        </select>     
+        Max. Aantal Iteraties: <input type = "text" name = "MaxIt" size= "5"> 
+        Vergroting: <input type = "text" name = "vergroting" size= "5" onFocus="blur()"> 
+        <button class="Opnieuw" name="Reset" value="1" type="button" onClick="JavaScript: ZoomIn(event, 3);">Reset</button>
+        <button class="Tekenp" name="Tekenmandel" value="1" type="button" onClick="JavaScript: ZoomIn(event, 2);">Teken</button>           
+        <br></center>
+        <font color = "#DDDD00">(Klik op figuur om in te zoomen op willekeurig punt.)</font>
+      </form></fieldset>
+    <div class = "kleurschema" id = "kleurenpaneel">
+      <form name = "colorscheme" style="clear: both">     
+      <fieldset>
+      <legend>Kleurschema</legend>
+        Aantal Kleuren:
+      <select id ="aantalkleur" name = "Aantal kleuren" onChange= "JavaScript: setKleurAantal(this.value)">
+      <option value  = "2"> 2
+      <option value =  "3"> 3
+      <option selected value = "4"> 4
+      <option value = "5">5
+      <option value = "6">6
+      <option value = "7">7
+      <option value = "8">8
+      </select><br>      
+      <p id = "pkleur1">
+      Kleur 1:
+      <select id = kleur1 name = "kleur1" onChange= "JavaScript: setLabelKleur(this.value, 1)">
+      </select><br>
+      </p>
+      <p id = "pkleur2">
+      Kleur 2:
+      <select id = kleur2 name = "kleur2" onChange= "JavaScript: setLabelKleur(this.value, 2)">
+      </select>
+      </p>
+      <p id = "pkleur3">
+      Kleur 3:
+      <select id = kleur3 name = "kleur3" onChange= "JavaScript: setLabelKleur(this.value, 3)">
+      </select>
+      </p>
+      <p id = "pkleur4">
+      Kleur 4:
+      <select id = kleur4 name = "kleur4" onChange= "JavaScript: setLabelKleur(this.value, 4)">
+      </select>
+      </p>
+      <p id = "pkleur5">
+      Kleur 5:
+      <select id = kleur5 name = "kleur5" onChange= "JavaScript: setLabelKleur(this.value, 5)">
+      </select>
+      </p>
+      <p id = "pkleur6">
+      Kleur 6:
+      <select id = kleur6 name = "kleur6" onChange= "JavaScript: setLabelKleur(this.value, 6)">
+      </select>
+      </p>
+      <p id = "pkleur7">
+      Kleur 7:
+      <select id = kleur7 name = "kleur7" onChange= "JavaScript: setLabelKleur(this.value, 7)">
+      </select><br>
+      </p>
+      <p id = "pkleur8">
+      Kleur 8:
+      <select id = kleur8 name = "kleur8" onChange= "JavaScript: setLabelKleur(this.value, 8)">
+      </select>
+      </p>
+      Kleurgradi&euml;nten: <input type = "text" id = "kleurgrad" name = "kleurgrad" size= "3">        
+    
+      </form></fieldset>    
+  
+    </div>
+    </div>
+
+    <p id = "tekst">
+    De <a href="http://nl.wikipedia.org/wiki/Mandelbrotverzameling">Mandelbrot fractal</a>        
+    behoort tot de mooiste en meest tot de verbeelding sprekende fractal die er bestaat maar is ondanks dat verrassend eenvoudig te programmeren. 
+    Wel is er veel rekentijd nodig, maar met de snelle computers van tegenwoordig zijn ze toch vrij snel te tekenen. Je kunt nu ook zelf
+    een eigen kleurschema maken. Leuk om wat mee te experimenteren. 
+
+    </p>
+   
+    <div id = "divbezoekerteller" style="color:#00FFFF;font-size:14px;font-weight:bold;">       
+      <script type='text/javascript'>               
+          var Statcode; 
+          var xhttp = new XMLHttpRequest();
+          var myURL = "http://www.javastraat.goedgehost.nl/Bezoekersteller/bezoekerteller.php?pagina=mandel&tonen=ja";
+          xhttp.open("GET", myURL, false);
+          xhttp.send();          
+          Statcode = xhttp.responseText;              
+          document.write(Statcode);        
+      </script>    
+    </div>
+  </body>
+</html>
